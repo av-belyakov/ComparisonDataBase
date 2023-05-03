@@ -33,21 +33,21 @@ func IntarctionMongoDB(conf *datamodels.ConfMongoDB, currentLog *logging.Logging
 		ChanDown:   make(chan struct{}),
 	}
 
-	// подключаемся к базе данных MongoDB
-	mclient, err := createConnection(conf)
+	client, err := CreateConnection(conf)
 	if err != nil {
 		currentLog.WriteLoggingData(fmt.Sprint(err), "error")
 
 		return channels, err
 	}
 
-	// инициализируем маршрутизатор запросов
-	go routing(channels.ChanOutput, mclient, currentLog, channels.ChanDown, channels.ChanInput)
+	collection := client.Database(conf.DBname).Collection("stix_object_collection")
+
+	go routing(channels.ChanOutput, collection, currentLog, channels.ChanDown, channels.ChanInput)
 
 	return channels, err
 }
 
-func createConnection(mdbs *datamodels.ConfMongoDB) (*mongo.Client, error) {
+func CreateConnection(mdbs *datamodels.ConfMongoDB) (*mongo.Client, error) {
 	fmt.Println("func 'createConnection' START")
 
 	ctx, ctxCancel := context.WithTimeout(context.Background(), 3000*time.Second)
@@ -81,7 +81,7 @@ func createConnection(mdbs *datamodels.ConfMongoDB) (*mongo.Client, error) {
 
 func routing(
 	chanOutput chan<- ChanOption,
-	mclient *mongo.Client,
+	collection *mongo.Collection,
 	currentLog *logging.LoggingData,
 	chanDown <-chan struct{},
 	chanInput <-chan ChanOption) {

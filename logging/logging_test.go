@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"comparison_data_two_DB/logging"
+	"ComparisonDataBase/logging"
 )
 
 var _ = Describe("Logging", Ordered, func() {

@@ -50,6 +50,6 @@ package datamodels
 // - "x509-certificate"
 // ID - уникальный идентификатор объекта (ОБЯЗАТЕЛЬНОЕ ЗНАЧЕНИЕ)
 type CommonPropertiesObjectSTIX struct {
-	Type string `json:"type" bson:"type" required:"true"`
-	ID   string `json:"id" bson:"id" required:"true"`
+	Type string `bson:"type"`
+	ID   string `bson:"id"`
 }

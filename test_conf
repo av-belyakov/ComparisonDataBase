@@ -1,0 +1,10 @@
+MongoDB:
+ host: 192.168.9.208
+ port: 37017
+ namedb: isems-mrsict
+ collection: stix_object_collection
+ user: module-isems-mrsict
+ passwd: vkL6Znj$Pmt1e1
+Redis:
+ host: 72.66.1.56
+ port: 6379
