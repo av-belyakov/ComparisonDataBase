@@ -9,8 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"ComparisonDataBase/datamodels"
-	"ComparisonDataBase/modulemongodb"
+	"github.com/av-belyakov/comparisondatabase/datamodels"
+	"github.com/av-belyakov/comparisondatabase/modulemongodb"
 )
 
 type definingTypeSTIXObject struct {

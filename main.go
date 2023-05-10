@@ -10,10 +10,10 @@ import (
 
 	"github.com/spf13/viper"
 
-	"ComparisonDataBase/datamodels"
-	"ComparisonDataBase/logging"
-	"ComparisonDataBase/modulemongodb"
-	"ComparisonDataBase/moduleredisearch"
+	"github.com/av-belyakov/comparisondatabase/datamodels"
+	"github.com/av-belyakov/comparisondatabase/logging"
+	"github.com/av-belyakov/comparisondatabase/modulemongodb"
+	"github.com/av-belyakov/comparisondatabase/moduleredisearch"
 )
 
 const strHelp = `application option:

@@ -5,8 +5,8 @@ import (
 
 	"github.com/RediSearch/redisearch-go/redisearch"
 
-	"ComparisonDataBase/datamodels"
-	"ComparisonDataBase/logging"
+	"github.com/av-belyakov/comparisondatabase/datamodels"
+	"github.com/av-belyakov/comparisondatabase/logging"
 )
 
 // RedisDBChannels содержит каналы для в заимодействия с базой данных Redis

@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"ComparisonDataBase/datamodels"
-	"ComparisonDataBase/logging"
+	"github.com/av-belyakov/comparisondatabase/datamodels"
+	"github.com/av-belyakov/comparisondatabase/logging"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

@@ -1,13 +1,13 @@
-module ComparisonDataBase
+module github.com/av-belyakov/comparisondatabase
 
 go 1.20
 
 require (
 	github.com/RediSearch/redisearch-go v1.1.1
-	github.com/onsi/ginkgo/v2 v2.9.3
+	github.com/onsi/ginkgo/v2 v2.9.4
 	github.com/onsi/gomega v1.27.6
 	github.com/spf13/viper v1.15.0
-	go.mongodb.org/mongo-driver v1.11.4
+	go.mongodb.org/mongo-driver v1.11.6
 )
 
 require (

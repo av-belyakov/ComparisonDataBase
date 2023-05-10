@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"ComparisonDataBase/datamodels"
-	"ComparisonDataBase/moduleredisearch"
+	"github.com/av-belyakov/comparisondatabase/datamodels"
+	"github.com/av-belyakov/comparisondatabase/moduleredisearch"
 )
 
 var _ = Describe("Moduleinteraction", Ordered, func() {
