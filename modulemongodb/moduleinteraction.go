@@ -14,22 +14,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-type ChanOption struct {
-	ActionType string
-	Data       interface{}
-}
-
+// MongoDBChannels содержит каналы для взаимодействия с базой данных MongoDB
 type MongoDBChannels struct {
-	ChanInput, ChanOutput chan ChanOption
-	ChanDown              chan struct{}
+	ChanInput  chan datamodels.ChannelsDescriptionInput
+	ChanOutput chan datamodels.ChannelsDescriptionOutput
+	ChanDown   chan struct{}
 }
 
 func IntarctionMongoDB(conf *datamodels.ConfMongoDB, currentLog *logging.LoggingData) (MongoDBChannels, error) {
 	fmt.Println("func 'intarctionMongoDB' START")
 
 	channels := MongoDBChannels{
-		ChanInput:  make(chan ChanOption),
-		ChanOutput: make(chan ChanOption),
+		ChanInput:  make(chan datamodels.ChannelsDescriptionInput),
+		ChanOutput: make(chan datamodels.ChannelsDescriptionOutput),
 		ChanDown:   make(chan struct{}),
 	}
 
@@ -44,7 +41,7 @@ func IntarctionMongoDB(conf *datamodels.ConfMongoDB, currentLog *logging.Logging
 
 	go routing(channels.ChanOutput, collection, currentLog, channels.ChanDown, channels.ChanInput)
 
-	return channels, err
+	return channels, nil
 }
 
 func CreateConnection(mdbs *datamodels.ConfMongoDB) (*mongo.Client, error) {
@@ -80,18 +77,20 @@ func CreateConnection(mdbs *datamodels.ConfMongoDB) (*mongo.Client, error) {
 }
 
 func routing(
-	chanOutput chan<- ChanOption,
+	chanOutput chan<- datamodels.ChannelsDescriptionOutput,
 	collection *mongo.Collection,
 	currentLog *logging.LoggingData,
 	chanDown <-chan struct{},
-	chanInput <-chan ChanOption) {
+	chanInput <-chan datamodels.ChannelsDescriptionInput) {
 	fmt.Println("func 'routing' START")
 
 	for {
 		select {
 		case req := <-chanInput:
-			fmt.Println("func 'routing', request for mongo database: ", req)
+			fmt.Println("func 'routing', REQUEST for mongo database: ", req)
 		case <-chanDown:
+			fmt.Println("func 'routing', reseived STOP signal")
+
 			return
 		}
 	}

@@ -65,11 +65,14 @@ func CreateConnection(conf datamodels.ConfRedisearch) (*redisearch.Client, error
 		// IPv4Address, IPv6Address, URL
 		AddField(redisearch.NewTextField("value"))
 
-	if err := conn.CreateIndex(sc); err != nil {
+	/*if err := conn.CreateIndex(sc); err == nil {
 		return conn, err
 	}
 
-	// return fmt.Errorf("error connecting to the Research database or error creating indexes")
+	return conn, fmt.Errorf("error connecting to the Research database or error creating indexes")*/
+
+	_ = conn.CreateIndex(sc)
+
 	return conn, nil
 }
 

@@ -18,13 +18,13 @@ type ConfMongoDB struct {
 // ConfRedis хранит настройки СУБД Redis
 // Host - ip адрес или доменное имя
 // Port - сетевой порт
-type ConfRedis struct {
+type ConfRedisearch struct {
 	Host string
 	Port int
 }
 
 // AppConfiguration хранит настройки приложения
 type AppConfiguration struct {
-	MongoDB ConfMongoDB
-	Redis   ConfRedis
+	MongoDB    ConfMongoDB
+	Redisearch ConfRedisearch
 }

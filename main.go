@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/spf13/viper"
 
 	"ComparisonDataBase/datamodels"
 	"ComparisonDataBase/logging"
 	"ComparisonDataBase/modulemongodb"
+	"ComparisonDataBase/moduleredisearch"
 )
 
 const strHelp = `application option:
@@ -37,7 +39,7 @@ const strHelp = `application option:
 	 mcollection: collectionDataBase
 	 user: userName
 	 passwd: userPasswd
-	Redis:
+	Redisearch:
 	 host: 127.0.0.1
 	 port: 6379`
 
@@ -64,8 +66,8 @@ func readFileYAML(fileName string, conf datamodels.AppConfiguration) (datamodels
 		conf.MongoDB.DBname = viper.GetString("MongoDB.namedb")
 	}
 
-	if viper.IsSet("MongoDB.mcollection") {
-		conf.MongoDB.Collection = viper.GetString("MongoDB.mcollection")
+	if viper.IsSet("MongoDB.collection") {
+		conf.MongoDB.Collection = viper.GetString("MongoDB.collection")
 	}
 
 	if viper.IsSet("MongoDB.user") {
@@ -76,12 +78,12 @@ func readFileYAML(fileName string, conf datamodels.AppConfiguration) (datamodels
 		conf.MongoDB.Passwd = viper.GetString("MongoDB.passwd")
 	}
 
-	if viper.IsSet("Redis.host") {
-		conf.Redis.Host = viper.GetString("Redis.host")
+	if viper.IsSet("Redisearch.host") {
+		conf.Redisearch.Host = viper.GetString("Redisearch.host")
 	}
 
-	if viper.IsSet("Redis.port") {
-		conf.Redis.Port = viper.GetInt("Redis.port")
+	if viper.IsSet("Redisearch.port") {
+		conf.Redisearch.Port = viper.GetInt("Redisearch.port")
 	}
 
 	return conf, nil
@@ -101,7 +103,7 @@ func NewAppConf() (datamodels.AppConfiguration, error) {
 			Host: "127.0.0.1",
 			Port: 27017,
 		},
-		Redis: datamodels.ConfRedis{
+		Redisearch: datamodels.ConfRedisearch{
 			Host: "127.0.0.1",
 			Port: 6379,
 		},
@@ -119,8 +121,8 @@ func NewAppConf() (datamodels.AppConfiguration, error) {
 	fs.StringVar(&conf.MongoDB.Collection, "mcollection", conf.MongoDB.Collection, "имя коллекции БД MongoDB")
 	fs.StringVar(&conf.MongoDB.User, "muser", conf.MongoDB.User, "имя пользователя для подключения к БД MongoDB")
 	fs.StringVar(&conf.MongoDB.Passwd, "mpasswd", conf.MongoDB.Passwd, "пароль для подключения к БД MongoDB")
-	fs.StringVar(&conf.Redis.Host, "rhost", conf.Redis.Host, "ip адрес или доменное имя СУБД Redis")
-	fs.IntVar(&conf.Redis.Port, "rport", conf.Redis.Port, "сетевой порт для подключения СУБД Redis")
+	fs.StringVar(&conf.Redisearch.Host, "rhost", conf.Redisearch.Host, "ip адрес или доменное имя СУБД Redis")
+	fs.IntVar(&conf.Redisearch.Port, "rport", conf.Redisearch.Port, "сетевой порт для подключения СУБД Redis")
 
 	if err := fs.Parse(os.Args[1:]); err != nil {
 		fmt.Println(err)
@@ -161,12 +163,12 @@ func init() {
 	}
 
 	if appConf.MongoDB.DBname == "" {
-		currentLog.WriteLoggingData(fmt.Sprintf(errMsg, "dbname"), "error")
+		currentLog.WriteLoggingData(fmt.Sprintf(errMsg, "data base name"), "error")
 		log.Fatal(errors.New("для запуска приложения необходимо указать наименование базы данных в MongoDB"))
 	}
 
 	if appConf.MongoDB.Collection == "" {
-		currentLog.WriteLoggingData(fmt.Sprintf(errMsg, "dbcollection"), "error")
+		currentLog.WriteLoggingData(fmt.Sprintf(errMsg, "data base collection"), "error")
 		log.Fatal(errors.New("для запуска приложения необходимо указать коллекцию в базе данных в MongoDB"))
 	}
 
@@ -176,7 +178,7 @@ func init() {
 	}
 
 	if appConf.MongoDB.Passwd == "" {
-		currentLog.WriteLoggingData(fmt.Sprintf(errMsg, "passwd"), "error")
+		currentLog.WriteLoggingData(fmt.Sprintf(errMsg, "password"), "error")
 		log.Fatal(errors.New("для запуска приложения необходимо указать пароль пользователя для доступа к MongoDB"))
 	}
 }
@@ -187,19 +189,26 @@ func main() {
 
 	currentLog.WriteLoggingData("start comparisonDataBase application", "information")
 
+	//инициализация соединения с MongoDB
 	mdbchan, err := modulemongodb.IntarctionMongoDB(&appConf.MongoDB, &currentLog)
 	if err != nil {
 		currentLog.WriteLoggingData(fmt.Sprint(err), "error")
 	}
 
+	//инициализация соединения с Redisearch
+	_, err = moduleredisearch.InteractionRedisearch(&appConf.Redisearch, &currentLog)
+	if err != nil {
+		currentLog.WriteLoggingData(fmt.Sprint(err), "error")
+	}
+
 	fmt.Println("action channals MongoDB: ", mdbchan, " send request to MongoDB")
-	mdbchan.ChanInput <- modulemongodb.ChanOption{
+	mdbchan.ChanInput <- datamodels.ChannelsDescriptionInput{
 		ActionType: "test request",
 		Data:       "any data",
 	}
 
-	fmt.Println("send data to chan STOP")
 	mdbchan.ChanDown <- struct{}{}
+	time.Sleep(3 * time.Second)
 
 	currentLog.ClosingFiles()
 }

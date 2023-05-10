@@ -5,6 +5,6 @@ MongoDB:
  collection: stix_object_collection
  user: module-isems-mrsict
  passwd: vkL6Znj$Pmt1e1
-Redis:
- host: 72.66.1.56
+Redisearch:
+ host: 192.168.9.208
  port: 6379
