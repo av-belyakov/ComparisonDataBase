@@ -24,8 +24,6 @@ var _ = Describe("Moduleinteraction", Ordered, func() {
 		})
 	})
 
-	fmt.Println("Connection: ", conn)
-
 	Context("Тест 1. Проверка подключения к БД Redisearch", func() {
 		It("При подключении к БД Redisearch ошибки быть не должно", func() {
 			Expect(rErr).ShouldNot(HaveOccurred())

@@ -40,6 +40,10 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/RediSearch/redisearch-go v1.1.1 h1:YElqguUO9lSqCYszrQcoTUoB9zBRyb2gkO4+yh3STMo=
 github.com/RediSearch/redisearch-go v1.1.1/go.mod h1:vcSdla+ZmI3B9doZbLoUrwNJfuvJzRt+/FoE38JcMS8=
+github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
+github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
+github.com/av-belyakov/methodstixobjects v0.0.0-20230511075152-b0a820f695f1 h1:QkvvTthtmET2ewqjmEMrhTN9avBz3pSWs+ZhcD43VCg=
+github.com/av-belyakov/methodstixobjects v0.0.0-20230511075152-b0a820f695f1/go.mod h1:L63TpDPb+utjU9X3LJG+I2OZSNNAqgd0+CyInp3JRk0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=

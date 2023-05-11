@@ -1,5 +1,9 @@
 package datamodels
 
+import (
+	"encoding/json"
+)
+
 // CommonPropertiesObjectSTIX свойства общие, для всех объектов STIX
 // Type - наименование типа шаблона (ОБЯЗАТЕЛЬНОЕ ЗНАЧЕНИЕ)
 //
@@ -52,4 +56,46 @@ package datamodels
 type CommonPropertiesObjectSTIX struct {
 	Type string `bson:"type"`
 	ID   string `bson:"id"`
+}
+
+// HandlerSTIXObject интерфейс реализующий обработчики для STIX объектов
+type HandlerSTIXObject interface {
+	DecoderJSONObject
+	EncoderJSONObject
+	GetterParametersSTIXObject
+	ToBeautifulOutputConverter
+	IndexingSTIXObject
+}
+
+// DecoderJSONObject интерфейс реализующий обработчик для декодирования JSON объекта в STIX объект
+type DecoderJSONObject interface {
+	DecodeJSON(*json.RawMessage) (interface{}, error)
+}
+
+// EncoderJSONObject интерфейс реализующий обработчик для кодирования STIX объекта в JSON объект
+type EncoderJSONObject interface {
+	EncodeJSON(interface{}) (*[]byte, error)
+}
+
+// GetterParametersSTIXObject интерфейс реализующий обработчик для получения ID STIX объекта
+type GetterParametersSTIXObject interface {
+	GetID() string
+	GetType() string
+}
+
+// ToBeautifulOutputConverter интерфейс реализующий обработчик для красивого представления данных хранящихся в пользовательской структуре
+type ToBeautifulOutputConverter interface {
+	ToStringBeautiful() string
+}
+
+type IndexingSTIXObject interface {
+	GeneratingDataForIndexing() map[string]string
+}
+
+// ElementSTIXObject может содержать любой из STIX объектов с указанием его типа
+// DataType - тип STIX объекта
+// Data - непосредственно сам STIX объект
+type ElementSTIXObject struct {
+	DataType string
+	Data     HandlerSTIXObject
 }
