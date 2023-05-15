@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/spf13/viper"
 
 	"github.com/av-belyakov/comparisondatabase/datamodels"
 	"github.com/av-belyakov/comparisondatabase/logging"
+	"github.com/av-belyakov/comparisondatabase/modulecomparison"
 	"github.com/av-belyakov/comparisondatabase/modulemongodb"
 	"github.com/av-belyakov/comparisondatabase/moduleredisearch"
 )
@@ -184,31 +184,36 @@ func init() {
 }
 
 func main() {
-	fmt.Println("comparisonDataBase application is START")
-	fmt.Println("___ appConf = ", appConf)
+	fmt.Println("Comparison data base application is START")
 
 	currentLog.WriteLoggingData("start comparisonDataBase application", "information")
 
 	//инициализация соединения с MongoDB
-	mdbchan, err := modulemongodb.IntarctionMongoDB(&appConf.MongoDB, &currentLog)
+	mdbChan, err := modulemongodb.IntarctionMongoDB(&appConf.MongoDB, &currentLog)
 	if err != nil {
 		currentLog.WriteLoggingData(fmt.Sprint(err), "error")
+
+		log.Fatal(err)
 	}
 
 	//инициализация соединения с Redisearch
-	_, err = moduleredisearch.InteractionRedisearch(&appConf.Redisearch, &currentLog)
+	rsdbChan, err := moduleredisearch.InteractionRedisearch(&appConf.Redisearch, &currentLog)
 	if err != nil {
 		currentLog.WriteLoggingData(fmt.Sprint(err), "error")
+
+		log.Fatal(err)
 	}
 
-	fmt.Println("action channals MongoDB: ", mdbchan, " send request to MongoDB")
-	mdbchan.ChanInput <- datamodels.ChannelsDescriptionInput{
+	fmt.Println("action channals MongoDB: ", mdbChan, " send request to MongoDB")
+	mdbChan.ChanInput <- datamodels.ChannelInputMDB{
 		ActionType: "test request",
 		Data:       "any data",
 	}
 
-	mdbchan.ChanDown <- struct{}{}
-	time.Sleep(3 * time.Second)
+	modulecomparison.ModuleInteraction(&mdbChan, &rsdbChan, &currentLog)
+
+	//	mdbchan.ChanDown <- struct{}{}
+	//	time.Sleep(3 * time.Second)
 
 	currentLog.ClosingFiles()
 }

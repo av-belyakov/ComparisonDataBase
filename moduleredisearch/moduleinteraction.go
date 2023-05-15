@@ -11,21 +11,20 @@ import (
 
 // RedisDBChannels содержит каналы для в заимодействия с базой данных Redis
 type RedisearchChannels struct {
-	ChanInput  chan datamodels.ChannelsDescriptionInput
-	ChanOutput chan datamodels.ChannelsDescriptionOutput
-	ChanDown   chan struct{}
+	ChanInput chan datamodels.ChannelInputRSDB
+	//	ChanOutput chan datamodels.ChannelsDescriptionOutput
+	ChanDown chan struct{}
 }
 
 func InteractionRedisearch(conf *datamodels.ConfRedisearch, currentLog *logging.LoggingData) (RedisearchChannels, error) {
 	fmt.Println("func 'InteractionRedisearch' START")
 
 	channels := RedisearchChannels{
-		ChanInput:  make(chan datamodels.ChannelsDescriptionInput),
-		ChanOutput: make(chan datamodels.ChannelsDescriptionOutput),
-		ChanDown:   make(chan struct{}),
+		ChanInput: make(chan datamodels.ChannelInputRSDB),
+		//		ChanOutput: make(chan datamodels.ChannelsDescriptionOutput),
+		ChanDown: make(chan struct{}),
 	}
 
-	//client, err := CreateConnection(conf)
 	conn, err := CreateConnection(*conf)
 	if err != nil {
 		currentLog.WriteLoggingData(fmt.Sprint(err), "error")
@@ -33,14 +32,12 @@ func InteractionRedisearch(conf *datamodels.ConfRedisearch, currentLog *logging.
 		return channels, err
 	}
 
-	go routing(channels.ChanOutput, conn, currentLog, channels.ChanDown, channels.ChanInput)
+	go routing(conn, currentLog, channels.ChanDown, channels.ChanInput)
 
 	return channels, nil
 }
 
 func CreateConnection(conf datamodels.ConfRedisearch) (*redisearch.Client, error) {
-	fmt.Println("func 'CreateConnection', Redisearch, START...")
-
 	conn := redisearch.NewClient(fmt.Sprintf("%v:%v", conf.Host, conf.Port), "isems-index")
 	if _, err := conn.Info(); err != nil {
 		return conn, err
@@ -65,23 +62,16 @@ func CreateConnection(conf datamodels.ConfRedisearch) (*redisearch.Client, error
 		// IPv4Address, IPv6Address, URL
 		AddField(redisearch.NewTextField("value"))
 
-	/*if err := conn.CreateIndex(sc); err == nil {
-		return conn, err
-	}
-
-	return conn, fmt.Errorf("error connecting to the Research database or error creating indexes")*/
-
 	_ = conn.CreateIndex(sc)
 
 	return conn, nil
 }
 
 func routing(
-	chanOutput chan<- datamodels.ChannelsDescriptionOutput,
 	conn *redisearch.Client,
 	currentLog *logging.LoggingData,
 	chanDown <-chan struct{},
-	chanInput <-chan datamodels.ChannelsDescriptionInput) {
+	chanInput <-chan datamodels.ChannelInputRSDB) {
 	fmt.Println("func 'routing' START")
 
 	for {
