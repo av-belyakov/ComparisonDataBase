@@ -2,7 +2,6 @@ package modulemongodb
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,8 +13,6 @@ import (
 
 // wrapperRoutingGetFullCount выполняет поиск общего количества объектов в коллекции
 func wrapperRoutingGetFullCount(collection *mongo.Collection) (int64, error) {
-	fmt.Println("func 'wrapperRoutingGetFullCount', reseived full count object")
-
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -29,8 +26,6 @@ func wrapperRoutingGetFullCount(collection *mongo.Collection) (int64, error) {
 }
 
 func wrapperRoutingGetLimitObject(collection *mongo.Collection, offset, limitMaxSize int64) ([]datamodels.ElementSTIXObject, error) {
-	fmt.Println("func 'wrapperRoutingGetLimitObject', reseived full count object")
-
 	sortOrder := -1
 	resultObject := make([]datamodels.ElementSTIXObject, 0, limitMaxSize)
 

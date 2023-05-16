@@ -23,42 +23,7 @@ func getListIndex(cur *mongo.Cursor) ([]datamodels.IndexObject, error) {
 			return listIndexObj, err
 		}
 
-		mt := elem.Data.GeneratingDataForIndexing()
-		indexObject := datamodels.IndexObject{
-			Type: elem.DataType,
-		}
-
-		for k, v := range mt {
-			if k == "id" {
-				indexObject.ID = v
-			}
-
-			if k == "name" {
-				indexObject.Name = v
-			}
-
-			if k == "description" {
-				indexObject.Description = v
-			}
-
-			if k == "street_address" {
-				indexObject.StreetAddress = v
-			}
-
-			if k == "abstract" {
-				indexObject.Abstract = v
-			}
-
-			if k == "content" {
-				indexObject.Content = v
-			}
-
-			if k == "value" {
-				indexObject.Value = v
-			}
-		}
-
-		listIndexObj = append(listIndexObj, indexObject)
+		listIndexObj = append(listIndexObj, moduleredisearch.GetIndex(elem))
 	}
 
 	return listIndexObj, nil
@@ -122,6 +87,7 @@ var _ = Describe("Moduleinteraction", Ordered, func() {
 		cursor, mdbFindErr = collection.Find(context.Background(), bson.D{})
 		//формируем список индексов
 		listIndexObj, createListIndexErr = getListIndex(cursor)
+		//listIndexObj, createListIndexErr = moduleredisearch.GetListIndex(cursor)
 
 		rsdbAddIndexErr = connRDB.IndexOptions(
 			redisearch.IndexingOptions{

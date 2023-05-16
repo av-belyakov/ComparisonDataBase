@@ -12,9 +12,17 @@ import (
 
 const limitMaxSize = 150
 
-func ModuleInteraction(mdbChan *modulemongodb.MongoDBChannels, rsdbChan *moduleredisearch.RedisearchChannels, currentLog *logging.LoggingData) {
-	fmt.Println("func 'ModuleInteraction', START...")
+func getListIndex(listElem []datamodels.ElementSTIXObject) []datamodels.IndexObject {
+	listIndexObj := []datamodels.IndexObject{}
 
+	for _, v := range listElem {
+		listIndexObj = append(listIndexObj, moduleredisearch.GetIndex(v))
+	}
+
+	return listIndexObj
+}
+
+func ModuleInteraction(mdbChan *modulemongodb.MongoDBChannels, rsdbChan *moduleredisearch.RedisearchChannels, currentLog *logging.LoggingData) {
 	var fullCountObj int64
 	var offset int = 1
 
@@ -42,12 +50,10 @@ func ModuleInteraction(mdbChan *modulemongodb.MongoDBChannels, rsdbChan *moduler
 		return
 	}
 
-	fmt.Println("All search object is equal: ", fullCountObj)
-
 	// получаем кол-во частей
 	maxChunk := commonlibs.GetCountChunk(fullCountObj, limitMaxSize)
 
-	fmt.Println("func 'ModuleInteraction', maxChank = ", maxChunk)
+	fmt.Printf("Total objects found %d, parts of them %d\n", fullCountObj, maxChunk)
 
 	mdbChan.ChanInput <- datamodels.ChannelInputMDB{
 		ActionType:   "get a limited number of objects",
@@ -56,12 +62,18 @@ func ModuleInteraction(mdbChan *modulemongodb.MongoDBChannels, rsdbChan *moduler
 	}
 
 	for data := range mdbChan.ChanOutput {
-		fmt.Printf("func 'ModuleInteraction', RESEIVED data from MongoDB: %v\n", data)
+		listElem, ok := data.Data.([]datamodels.ElementSTIXObject)
+		if ok {
+			fmt.Println("Creating indexes for objects of part no. ", offset)
+
+			rsdbChan.ChanInput <- datamodels.ChannelInputRSDB{
+				ActionType: "set index",
+				IndexList:  getListIndex(listElem),
+			}
+		}
 
 		if offset == maxChunk {
-			fmt.Println("func 'ModuleInteraction', STOP FOR")
-
-			return
+			break
 		}
 
 		offset += 1
@@ -72,31 +84,12 @@ func ModuleInteraction(mdbChan *modulemongodb.MongoDBChannels, rsdbChan *moduler
 		}
 	}
 
-	/*
-		Сделал что бы генерировались запросы на получение всех кусочков, однако приложение завершает работу (и скорее всего
-		раньше чем будут добавлены данные в Redisearch) потому что блокирующая функция завершает цикл в связи с закрытием
-		канала. Этот момент надо продумать, что бы приложение не завершало работу до того как данные не будут гарантированно
-		добавлены в Redisearch
+	mdbChan.ChanDown <- struct{}{}
 
-	*/
+	rsdbChan.ChanInput <- datamodels.ChannelInputRSDB{ActionType: "get count index"}
+	tmp := <-rsdbChan.ChanOutput
 
-	//? если Redisearch ничего не будет возвращать (вроде не должна так как стороит только индексы) то достаточно этого
-	/*
-		for {
-			select {
-			case data := <-mdbChan.ChanOutput:
-				fmt.Printf("func 'ModuleInteraction', RESEIVED data from MongoDB: %v\n", data)
+	rsdbChan.ChanDown <- struct{}{}
 
-			}
-		}
-		/*
-			Функция должна принимать два канала для взаимодействия с модулями MongoDB и Redisearch, кроме
-			того метод для логирования хода выполнения
-
-			1. Получить общее кол-во данных в MongoDB
-			1.1 Вывести в консоль полученные данные
-			2. Разделить кол-во полученных данных на сегменты ?
-			3. Запрос сегмента
-			4. Передача данных, через канал, в модуль ответственный за взаимодействие с Redisearch
-	*/
+	fmt.Println("Total indexes built ", tmp.IndexCount)
 }

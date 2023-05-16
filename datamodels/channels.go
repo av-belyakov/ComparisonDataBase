@@ -8,6 +8,14 @@ type ChannelOutputMDB struct {
 	Data     interface{}
 }
 
+// ChannelOutputRSDB предназначен для передачи данных из БД Redisearch
+// DataType - тип данных
+// IndexCount - количество индексов
+type ChannelOutputRSDB struct {
+	DataType   string
+	IndexCount int
+}
+
 // ChannelInputMDB предназначен для передачи запросов в БД MongoDB
 // ActionType - тип запроса
 // Offset - смещение
@@ -25,5 +33,5 @@ type ChannelInputMDB struct {
 // IndexList - список индексов
 type ChannelInputRSDB struct {
 	ActionType string
-	IndexList  map[string]string
+	IndexList  []IndexObject
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/av-belyakov/comparisondatabase/datamodels"
@@ -21,7 +22,7 @@ type MongoDBChannels struct {
 	ChanDown   chan struct{}
 }
 
-func IntarctionMongoDB(conf *datamodels.ConfMongoDB, currentLog *logging.LoggingData) (MongoDBChannels, error) {
+func IntarctionMongoDB(conf *datamodels.ConfMongoDB, currentLog *logging.LoggingData, wg *sync.WaitGroup) (MongoDBChannels, error) {
 	channels := MongoDBChannels{
 		ChanInput:  make(chan datamodels.ChannelInputMDB),
 		ChanOutput: make(chan datamodels.ChannelOutputMDB),
@@ -37,7 +38,16 @@ func IntarctionMongoDB(conf *datamodels.ConfMongoDB, currentLog *logging.Logging
 
 	collection := client.Database(conf.DBname).Collection("stix_object_collection")
 
-	go routing(channels.ChanOutput, collection, currentLog, channels.ChanDown, channels.ChanInput)
+	go routing(channels.ChanOutput, collection, currentLog, channels.ChanInput)
+	go func() {
+		<-channels.ChanDown
+		fmt.Println("func IntarctionMongoDB, groutina CLOSE channels ChanInput and ChanOutput")
+
+		close(channels.ChanInput)
+		close(channels.ChanOutput)
+
+		wg.Done()
+	}()
 
 	return channels, nil
 }
@@ -74,15 +84,37 @@ func routing(
 	chanOutput chan<- datamodels.ChannelOutputMDB,
 	collection *mongo.Collection,
 	currentLog *logging.LoggingData,
-	chanDown <-chan struct{},
 	chanInput <-chan datamodels.ChannelInputMDB) {
-	fmt.Println("func 'routing' START")
 
-	for {
+	for req := range chanInput {
+		switch req.ActionType {
+		case "get count object":
+			result, err := wrapperRoutingGetFullCount(collection)
+			if err != nil {
+				currentLog.WriteLoggingData(fmt.Sprint(err), "error")
+			}
+
+			chanOutput <- datamodels.ChannelOutputMDB{
+				DataType: "full count object",
+				Data:     result,
+			}
+
+		case "get a limited number of objects":
+			result, err := wrapperRoutingGetLimitObject(collection, req.Offset, req.LimitMaxSize)
+
+			if err != nil {
+				currentLog.WriteLoggingData(fmt.Sprint(err), "error")
+			}
+
+			chanOutput <- datamodels.ChannelOutputMDB{
+				DataType: "limited number of object",
+				Data:     result,
+			}
+		}
+	}
+	/*for {
 		select {
 		case req := <-chanInput:
-			fmt.Println("func 'routing', REQUEST for mongo database: ", req)
-
 			switch req.ActionType {
 			case "get count object":
 				result, err := wrapperRoutingGetFullCount(collection)
@@ -108,11 +140,11 @@ func routing(
 				}
 			}
 		case <-chanDown:
-			fmt.Println("func 'routing', reseived STOP signal")
+			fmt.Println("func 'routing' MongoDB, reseived STOP signal")
 
 			close(chanOutput)
 
 			return
 		}
-	}
+	}*/
 }

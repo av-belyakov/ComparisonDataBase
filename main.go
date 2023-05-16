@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/spf13/viper"
 
@@ -186,34 +187,31 @@ func init() {
 func main() {
 	fmt.Println("Comparison data base application is START")
 
+	var wg sync.WaitGroup
+
 	currentLog.WriteLoggingData("start comparisonDataBase application", "information")
 
+	wg.Add(1)
 	//инициализация соединения с MongoDB
-	mdbChan, err := modulemongodb.IntarctionMongoDB(&appConf.MongoDB, &currentLog)
+	mdbChan, err := modulemongodb.IntarctionMongoDB(&appConf.MongoDB, &currentLog, &wg)
 	if err != nil {
 		currentLog.WriteLoggingData(fmt.Sprint(err), "error")
 
 		log.Fatal(err)
 	}
 
+	wg.Add(1)
 	//инициализация соединения с Redisearch
-	rsdbChan, err := moduleredisearch.InteractionRedisearch(&appConf.Redisearch, &currentLog)
+	rsdbChan, err := moduleredisearch.InteractionRedisearch(&appConf.Redisearch, &currentLog, &wg)
 	if err != nil {
 		currentLog.WriteLoggingData(fmt.Sprint(err), "error")
 
 		log.Fatal(err)
-	}
-
-	fmt.Println("action channals MongoDB: ", mdbChan, " send request to MongoDB")
-	mdbChan.ChanInput <- datamodels.ChannelInputMDB{
-		ActionType: "test request",
-		Data:       "any data",
 	}
 
 	modulecomparison.ModuleInteraction(&mdbChan, &rsdbChan, &currentLog)
 
-	//	mdbchan.ChanDown <- struct{}{}
-	//	time.Sleep(3 * time.Second)
+	wg.Wait()
 
 	currentLog.ClosingFiles()
 }

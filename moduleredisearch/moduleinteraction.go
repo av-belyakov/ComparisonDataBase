@@ -2,6 +2,7 @@ package moduleredisearch
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/RediSearch/redisearch-go/redisearch"
 
@@ -11,18 +12,34 @@ import (
 
 // RedisDBChannels содержит каналы для в заимодействия с базой данных Redis
 type RedisearchChannels struct {
-	ChanInput chan datamodels.ChannelInputRSDB
-	//	ChanOutput chan datamodels.ChannelsDescriptionOutput
-	ChanDown chan struct{}
+	ChanInput  chan datamodels.ChannelInputRSDB
+	ChanOutput chan datamodels.ChannelOutputRSDB
+	ChanDown   chan struct{}
 }
 
-func InteractionRedisearch(conf *datamodels.ConfRedisearch, currentLog *logging.LoggingData) (RedisearchChannels, error) {
-	fmt.Println("func 'InteractionRedisearch' START")
+func getRedisearchDocument(listIndex []datamodels.IndexObject) []redisearch.Document {
+	redisearchDoc := make([]redisearch.Document, 0, len(listIndex))
 
+	for _, v := range listIndex {
+		tmp := redisearch.NewDocument(v.ID, 1.0)
+		tmp.Set("name", v.Name)
+		tmp.Set("description", v.Description)
+		tmp.Set("street_address", v.StreetAddress)
+		tmp.Set("abstract", v.Abstract)
+		tmp.Set("content", v.Content)
+		tmp.Set("value", v.Value)
+
+		redisearchDoc = append(redisearchDoc, tmp)
+	}
+
+	return redisearchDoc
+}
+
+func InteractionRedisearch(conf *datamodels.ConfRedisearch, currentLog *logging.LoggingData, wg *sync.WaitGroup) (RedisearchChannels, error) {
 	channels := RedisearchChannels{
-		ChanInput: make(chan datamodels.ChannelInputRSDB),
-		//		ChanOutput: make(chan datamodels.ChannelsDescriptionOutput),
-		ChanDown: make(chan struct{}),
+		ChanInput:  make(chan datamodels.ChannelInputRSDB),
+		ChanOutput: make(chan datamodels.ChannelOutputRSDB),
+		ChanDown:   make(chan struct{}),
 	}
 
 	conn, err := CreateConnection(*conf)
@@ -32,7 +49,16 @@ func InteractionRedisearch(conf *datamodels.ConfRedisearch, currentLog *logging.
 		return channels, err
 	}
 
-	go routing(conn, currentLog, channels.ChanDown, channels.ChanInput)
+	go routing(channels.ChanOutput, conn, currentLog, channels.ChanInput)
+	go func() {
+		<-channels.ChanDown
+		fmt.Println("func InteractionRedisearch, groutina CLOSE channels ChanInput and ChanOutput")
+
+		close(channels.ChanInput)
+		close(channels.ChanOutput)
+
+		wg.Done()
+	}()
 
 	return channels, nil
 }
@@ -68,20 +94,39 @@ func CreateConnection(conf datamodels.ConfRedisearch) (*redisearch.Client, error
 }
 
 func routing(
+	chanOutput chan<- datamodels.ChannelOutputRSDB,
 	conn *redisearch.Client,
 	currentLog *logging.LoggingData,
-	chanDown <-chan struct{},
 	chanInput <-chan datamodels.ChannelInputRSDB) {
-	fmt.Println("func 'routing' START")
 
-	for {
-		select {
-		case req := <-chanInput:
-			fmt.Println("func 'routing', REQUEST for redisearch database: ", req)
-		case <-chanDown:
-			fmt.Println("func 'routing', reseived STOP signal")
+	for req := range chanInput {
+		switch req.ActionType {
+		case "set index":
+			if err := conn.IndexOptions(
+				redisearch.IndexingOptions{
+					Replace: true,
+					Partial: true,
+				}, getRedisearchDocument(req.IndexList)...); err != nil {
+				currentLog.WriteLoggingData(fmt.Sprint(err), "error")
+			}
 
-			return
+		case "get count index":
+			_, docNum, err := conn.Search(redisearch.NewQuery("*").
+				AddFilter(
+					redisearch.Filter{
+						Field: "name",
+					},
+				).
+				SetReturnFields("id"))
+
+			if err != nil {
+				currentLog.WriteLoggingData(fmt.Sprint(err), "error")
+			}
+
+			chanOutput <- datamodels.ChannelOutputRSDB{
+				DataType:   "send count index",
+				IndexCount: docNum,
+			}
 		}
 	}
 }
