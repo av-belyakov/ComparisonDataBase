@@ -22,6 +22,7 @@ func getRedisearchDocument(listIndex []datamodels.IndexObject) []redisearch.Docu
 
 	for _, v := range listIndex {
 		tmp := redisearch.NewDocument(v.ID, 1.0)
+		tmp.Set("type", v.Type)
 		tmp.Set("name", v.Name)
 		tmp.Set("description", v.Description)
 		tmp.Set("street_address", v.StreetAddress)
