@@ -32,6 +32,10 @@ func GetIndex(elem datamodels.ElementSTIXObject) datamodels.IndexObject {
 			indexObject.Abstract = v
 		}
 
+		if k == "aliases" {
+			indexObject.Aliases = v
+		}
+
 		if k == "content" {
 			indexObject.Content = v
 		}

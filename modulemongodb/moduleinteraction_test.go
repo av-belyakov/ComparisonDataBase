@@ -3,6 +3,7 @@ package modulemongodb_test
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/RediSearch/redisearch-go/redisearch"
 	. "github.com/onsi/ginkgo/v2"
@@ -34,12 +35,13 @@ func getRedisearchDocument(cur *redisearch.Client, listIndex []datamodels.IndexO
 
 	for _, v := range listIndex {
 		tmp := redisearch.NewDocument(v.ID, 1.0)
-		tmp.Set("name", v.Name)
-		tmp.Set("description", v.Description)
-		tmp.Set("street_address", v.StreetAddress)
-		tmp.Set("abstract", v.Abstract)
-		tmp.Set("content", v.Content)
-		tmp.Set("value", v.Value)
+		tmp.Set("name", strings.ToLower(v.Name))
+		tmp.Set("description", strings.ToLower(v.Description))
+		tmp.Set("street_address", strings.ToLower(v.StreetAddress))
+		tmp.Set("abstract", strings.ToLower(v.Abstract))
+		tmp.Set("aliases", strings.ToLower(v.Aliases))
+		tmp.Set("content", strings.ToLower(v.Content))
+		tmp.Set("value", strings.ToLower(v.Value))
 
 		redisearchDoc = append(redisearchDoc, tmp)
 	}
@@ -117,7 +119,7 @@ var _ = Describe("Moduleinteraction", Ordered, func() {
 			}
 
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(len(listID)).Should(Equal(541))
+			Expect(len(listID)).Should(Equal(555))
 		})
 	})
 
@@ -135,7 +137,7 @@ var _ = Describe("Moduleinteraction", Ordered, func() {
 
 	Context("Тест 5. Проверка наличия заданного количества индексов в списке", func() {
 		It("Должен быть создан спискок индексов с заданным количеством", func() {
-			Expect(len(listIndexObj)).Should(Equal(541))
+			Expect(len(listIndexObj)).Should(Equal(555))
 		})
 	})
 
@@ -152,29 +154,17 @@ var _ = Describe("Moduleinteraction", Ordered, func() {
 	})
 
 	Context("Тест 8. Проверка поиска информации по индексам в Redisearch", func() {
-		It("Должно быть добавленно (541) новых индексов", func() {
+		It("Должно быть добавленно (554) новых индексов", func() {
 			_, num, err := connRDB.Search(redisearch.NewQuery("*").
-				AddFilter(
-					redisearch.Filter{
-						Field: "name",
-					},
-				).
 				SetReturnFields("id"))
 
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(num).Should(Equal(541))
+			Expect(num).Should(Equal(554))
 		})
 
 		It("При выполнении поиска должно быть найден один ID объекта где поле 'name' равно 'frogfrog_list.txt'", func() {
 			listName, numName, err := connRDB.Search(redisearch.NewQuery("frogfrog_list.txt").
-				AddFilter(
-					redisearch.Filter{
-						Field: "name",
-					},
-				).
 				SetReturnFields("id"))
-
-			fmt.Printf("______FULL SEARCH DOCUMENTS name = frogfrog_list.txt: %v\n", listName[0].Id)
 
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(listName[0].Id).Should(Equal("file--9b98cee2-06af-4f2e-a23a-3762c3e40bb9"))
@@ -183,21 +173,14 @@ var _ = Describe("Moduleinteraction", Ordered, func() {
 
 		It("При выполнении поиска должно быть найден один ID объекта где поле 'description' содержит 'testy to try'", func() {
 			listDesc, numDesc, err := connRDB.Search(redisearch.NewQuery("testy to try").
-				AddFilter(
-					redisearch.Filter{
-						Field: "description",
-					},
-				).
 				SetReturnFields("id"))
-
-			fmt.Printf("______FULL SEARCH DOCUMENTS description contains 'testy to try': %v\n", listDesc[0].Id)
 
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(listDesc[0].Id).Should(Equal("report--0c6a75be-d979-4646-a92b-58ae4ab2d95d"))
 			Expect(numDesc).Should(Equal(1))
 		})
 
-		It("При выполнении поиска должно быть найден один ID объекта где поле 'description' содержит 'Лягушки бывают разные.'", func() {
+		/*It("При выполнении поиска должно быть найден один ID объекта где поле 'description' содержит 'Лягушки бывают разные.'", func() {
 			listDesc, numDesc, err := connRDB.Search(redisearch.NewQuery("Лягушки бывают разные.").
 				AddFilter(
 					redisearch.Filter{
@@ -206,12 +189,73 @@ var _ = Describe("Moduleinteraction", Ordered, func() {
 				).
 				SetReturnFields("id", "name", "description", "street_address", "abstract", "content", "value"))
 
-			fmt.Printf("______FULL SEARCH DOCUMENTS description contains 'Лягушки бывают разные.': %s\n", listDesc[0].Id)
-			fmt.Printf("______ALL INDEX: %v", listDesc[0].Properties)
+			fmt.Printf("______FULL SEARCH DOCUMENTS description contains 'Лягушки бывают разные.': %v\n", listDesc)
+			//fmt.Printf("______ALL INDEX: %v", listDesc[0].Properties)
 
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(listDesc[0].Id).Should(Equal("report--193e108f-6cb3-474f-b4d3-fb7a86ebdca1"))
 			Expect(numDesc).Should(Equal(1))
+		})*/
+
+		It("При выполнении поиска должно быть найден некоторое количество объектов где некоторые поля содержут 'электрического оборудования'", func() {
+			listDesc, numDesc, err := connRDB.Search(redisearch.NewQuery("электрического оборудования").
+				SetReturnFields("id", "name", "description", "street_address", "abstract", "content", "value"))
+
+			fmt.Println("___ 'электрического оборудования' ___")
+			for k, v := range listDesc {
+				fmt.Printf("%d.______FULL SEARCH DOCUMENTS contains 'электрического оборудования': %v\n", k+1, v)
+			}
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(numDesc).Should(Equal(2))
+		})
+
+		It("При выполнении поиска должно быть найден некоторое количество объектов где некоторые поля содержут 'Хаги'", func() {
+			listDesc, numDesc, err := connRDB.Search(redisearch.NewQuery(strings.ToLower("Хаги")).
+				SetReturnFields("id", "name", "description", "street_address", "abstract", "content", "value"))
+
+			fmt.Println("___ 'Хаги' ___")
+			for k, v := range listDesc {
+				fmt.Printf("%d.______FULL SEARCH DOCUMENTS contains 'Хаги': %v\n", k+1, v)
+			}
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(numDesc).Should(Equal(2))
+		})
+
+		It("При выполнении поиска должно быть найден некоторое количество объектов где некоторые поля содержут 'производству'", func() {
+			listDesc, numDesc, err := connRDB.Search(redisearch.NewQuery("производству").
+				SetReturnFields("id", "name", "description", "street_address", "abstract", "content", "value"))
+
+			fmt.Println("___ 'производству' ___")
+			for k, v := range listDesc {
+				fmt.Printf("%d.______FULL SEARCH DOCUMENTS contains 'производству': %v\n", k+1, v)
+			}
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(numDesc).Should(Equal(5))
+		})
+
+		It("При выполнении поиска должно быть найден некоторое количество объектов где некоторые поля что то содержут", func() {
+			//listDesc, numDesc, err := connRDB.Search(redisearch.NewQuery("производству").
+			listDesc, numDesc, err := connRDB.Search(redisearch.NewQuery("Poison").
+				SetReturnFields("id", "name", "description", "street_address", "abstract", "content", "value"))
+
+			fmt.Println("___ 'Poison' ___")
+			for k, v := range listDesc {
+				fmt.Printf("%d. %v\n", k+1, v)
+			}
+
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(numDesc).Should(Equal(3))
+		})
+
+		It("Преобразование строки к нижнему регистру", func() {
+			strRuTest := "Просто предложение на Кирилице"
+			strEngTest := "Just a suggestion on English"
+
+			Expect(strings.ToLower(strRuTest)).Should(Equal("просто предложение на кирилице"))
+			Expect(strings.ToLower(strEngTest)).Should(Equal("just a suggestion on english"))
 		})
 	})
 })

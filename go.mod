@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/RediSearch/redisearch-go v1.1.1
+	github.com/av-belyakov/methodstixobjects v0.0.0-20230511075152-b0a820f695f1
 	github.com/onsi/ginkgo/v2 v2.9.4
 	github.com/onsi/gomega v1.27.6
 	github.com/spf13/viper v1.15.0
@@ -12,7 +13,6 @@ require (
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/av-belyakov/methodstixobjects v0.0.0-20230511075152-b0a820f695f1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
