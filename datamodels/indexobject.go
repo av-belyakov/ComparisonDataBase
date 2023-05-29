@@ -2,6 +2,7 @@ package datamodels
 
 // IndexObject объект индексирования
 // ID - идентификатор
+// Type - тип объекта
 // Name - наименование
 // Description - подробное описание
 // StreetAddress - физический адрес
@@ -12,6 +13,7 @@ package datamodels
 // EmailAddress, IPv4Address, IPv6Address, URL
 type IndexObject struct {
 	ID            string `bson:"id"`
+	Type          string `bson:"type"`
 	Name          string `bson:"name"`
 	Description   string `bson:"description"`
 	StreetAddress string `bson:"street_address"`
